@@ -46,6 +46,7 @@ export function useWhatsappEmbeddedSignup() {
           business_id: businessData.business_id,
           waba_id: businessData.waba_id,
           phone_number_id: businessData.phone_number_id || '',
+          business_app_onboarding: businessData.business_app_onboarding,
         });
       };
 
@@ -58,7 +59,11 @@ export function useWhatsappEmbeddedSignup() {
             settle(reject, new Error('Invalid business data'));
             return;
           }
-          businessData = data.data;
+          businessData = {
+            ...data.data,
+            business_app_onboarding:
+              data.event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
+          };
           resolveIfReady();
         } else if (data.event === 'CANCEL') {
           settle(resolve, null);

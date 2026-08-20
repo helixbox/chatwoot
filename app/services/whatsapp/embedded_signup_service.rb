@@ -5,6 +5,7 @@ class Whatsapp::EmbeddedSignupService
     @business_id = params[:business_id]
     @waba_id = params[:waba_id]
     @phone_number_id = params[:phone_number_id]
+    @business_app_onboarding = ActiveModel::Type::Boolean.new.cast(params[:business_app_onboarding])
     @inbox_id = inbox_id
   end
 
@@ -20,6 +21,7 @@ class Whatsapp::EmbeddedSignupService
     # 2. We need to run check_channel_health_and_prompt_reauth after webhook setup completes
     # 3. The channel is marked with source: 'embedded_signup' to skip the after_commit callback
     channel.setup_webhooks
+    request_history_sync(channel) if history_sync_eligible?(channel)
     # Skip health check during reauthorization — phone numbers in pending provisioning state
     # (platform_type: NOT_APPLICABLE) would incorrectly trigger a disconnect email right after
     # a successful reauth. Only run health check for new channel creation.
@@ -53,6 +55,20 @@ class Whatsapp::EmbeddedSignupService
       waba_info = { waba_id: @waba_id, business_name: phone_info[:business_name] }
       Whatsapp::ChannelCreationService.new(@account, waba_info, phone_info, access_token).perform
     end
+  end
+
+  def request_history_sync(channel)
+    Whatsapp::HistorySync::RequestService.new(channel).perform
+  rescue StandardError => e
+    Rails.logger.error("[WHATSAPP HISTORY SYNC] Request failed for channel #{channel.id}: #{e.message}")
+  end
+
+  def new_business_app_onboarding?
+    @inbox_id.blank? && @business_app_onboarding
+  end
+
+  def history_sync_eligible?(channel)
+    new_business_app_onboarding? && !channel.reauthorization_required?
   end
 
   def check_channel_health_and_prompt_reauth(channel)

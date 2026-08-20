@@ -79,6 +79,7 @@ describe('useWhatsappEmbeddedSignup', () => {
       business_id: 'biz-1',
       waba_id: 'waba-1',
       phone_number_id: 'phone-1',
+      business_app_onboarding: false,
     });
     expect(setupFacebookSdk).toHaveBeenCalledWith('app-id', 'v22.0');
     expect(initWhatsAppEmbeddedSignup).toHaveBeenCalledWith('config-id');
@@ -103,6 +104,7 @@ describe('useWhatsappEmbeddedSignup', () => {
       business_id: 'biz-1',
       waba_id: 'waba-1',
       phone_number_id: 'phone-1',
+      business_app_onboarding: true,
     });
   });
 
